@@ -70,7 +70,7 @@ class Transformer(nn.Module):
         hs = hs.transpose(1, 2)  # (#layers, batch_size, #qeries, d)
         # memory = memory.permute(1, 2, 0)  # (batch_size, d, L)
         memory = memory.transpose(0, 1)  # (batch_size, L, d)
-        return hs, memory
+        return hs, memory  # memeory 是中间结果.  hs是最后编码
 
 
 class TransformerEncoder(nn.Module):

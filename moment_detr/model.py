@@ -105,14 +105,14 @@ class MomentDETR(nn.Module):
         # pad zeros for txt positions
         pos = torch.cat([pos_vid, pos_txt], dim=1)
         # (#layers, bsz, #queries, d), (bsz, L_vid+L_txt, d)
-        hs, memory = self.transformer(src, ~mask, self.query_embed.weight, pos)
+        hs, memory = self.transformer(src, ~mask, self.query_embed.weight, pos)   # 第几个问题的数也进行编码.
         outputs_class = self.class_embed(hs)  # (#layers, batch_size, #queries, #classes)
         outputs_coord = self.span_embed(hs)  # (#layers, bsz, #queries, 2 or max_v_l * 2)
         if self.span_loss_type == "l1":
             outputs_coord = outputs_coord.sigmoid()
         out = {'pred_logits': outputs_class[-1], 'pred_spans': outputs_coord[-1]}
 
-        txt_mem = memory[:, src_vid.shape[1]:]  # (bsz, L_txt, d)
+        txt_mem = memory[:, src_vid.shape[1]:]  # (bsz, L_txt, d) # memory 拆开txt和vid部分.
         vid_mem = memory[:, :src_vid.shape[1]]  # (bsz, L_vid, d)
         if self.contrastive_align_loss:
             proj_queries = F.normalize(self.contrastive_align_projection_query(hs), p=2, dim=-1)
@@ -124,7 +124,7 @@ class MomentDETR(nn.Module):
                 proj_vid_mem=proj_vid_mem
             ))
 
-        out["saliency_scores"] = self.saliency_proj(vid_mem).squeeze(-1)  # (bsz, L_vid)
+        out["saliency_scores"] = self.saliency_proj(vid_mem).squeeze(-1)  # (bsz, L_vid) #返回vid平分.
 
         if self.aux_loss:
             # assert proj_queries and proj_txt_mem

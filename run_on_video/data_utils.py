@@ -19,8 +19,8 @@ class ClipFeatureExtractor:
     def encode_video(self, video_path: str, bsz=60):
         video_frames = self.video_loader.read_video_from_file(video_path)  # (T, H, W, 3)
         video_frames = self.video_preprocessor(video_frames)
-        n_frames = len(video_frames)
-        n_batch = int(math.ceil(n_frames / bsz))
+        n_frames = len(video_frames)#=======一共多少个帧
+        n_batch = int(math.ceil(n_frames / bsz)) # 一个多少组帧,一组60.
         video_features = []
         for i in range(n_batch):
             st_idx = i * bsz
@@ -28,7 +28,7 @@ class ClipFeatureExtractor:
             _video_frames = video_frames[st_idx:ed_idx].to(self.device)
             _video_features = self.clip_extractor.encode_image(_video_frames)
             video_features.append(_video_features)
-        video_features = torch.cat(video_features, dim=0)
+        video_features = torch.cat(video_features, dim=0) # 帧再合并.
         return video_features  # (T=#frames, d) torch tensor
 
     @torch.no_grad()
@@ -45,7 +45,7 @@ class ClipFeatureExtractor:
             batch_last_hidden_states = output["last_hidden_state"]
             for j, valid_len in enumerate(valid_lengths):
                 text_features.append(batch_last_hidden_states[j, :valid_len])
-        return text_features  # List([L_j, d]) torch tensor
+        return text_features  # List([L_j, d]) torch tensor # 需要返回的是词级别的向量, 所以是last_hidden不是pooling 
 
 
 def convert_to_float(frac_str):
@@ -98,7 +98,7 @@ class VideoLoader:
     """
     def __init__(
             self,
-            framerate=1/2,
+            framerate=1/2,       #=====参数保证压缩率.
             size=224,
             centercrop=True,
     ):
@@ -132,7 +132,8 @@ class VideoLoader:
 
     def read_video_from_file(self, video_path):
         try:
-            info = self._get_video_info(video_path)
+            info = self._get_video_info(video_path)#=======视频的基本信息.
+            print('当前视频全部信息',info)
             h, w = info["height"], info["width"]
         except Exception:
             print('ffprobe failed at: {}'.format(video_path))
@@ -140,9 +141,9 @@ class VideoLoader:
                     'info': {}}
         height, width = self._get_output_dim(h, w)
         try:
-            duration = info["duration"]
-            fps = self.framerate
-            if duration > 0 and duration < 1/fps+0.1:
+            duration = info["duration"] #===========这里调整帧率, 从而压缩视频信息.
+            fps = self.framerate  # 设置为新的率.
+            if duration > 0 and duration < 1/fps+0.1:#======如果意外也就是duration太小.那么重新算fps.
                 fps = 2/max(int(duration), 1)
                 print(duration, fps)
         except Exception:
@@ -152,19 +153,19 @@ class VideoLoader:
             .input(video_path)
             .filter('fps', fps=fps)
             .filter('scale', width, height)
-        )
-        if self.centercrop:
+        )#https://ffmpeg.org/ffmpeg-filters.html#fps-1
+        if self.centercrop:       # 视频进行居中切割.
             x = int((width - self.size) / 2.0)
             y = int((height - self.size) / 2.0)
             cmd = cmd.crop(x, y, self.size, self.size)
         out, _ = (
             cmd.output('pipe:', format='rawvideo', pix_fmt='rgb24')
-            .run(capture_stdout=True, quiet=True)
+            .run(capture_stdout=True, quiet=True)  # rgb24位真彩色.
         )
         if self.centercrop and isinstance(self.size, int):
             height, width = self.size, self.size
         video = np.frombuffer(out, np.uint8).reshape(
-            [-1, height, width, 3])
+            [-1, height, width, 3]) # 图像所以是uin8. 255像素.
         video = torch.from_numpy(video.astype('float32'))
         video = video.permute(0, 3, 1, 2)
         return video

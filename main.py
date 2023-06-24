@@ -36,18 +36,18 @@ class MomentDETRPredictor:
         video_feats = self.feature_extractor.encode_video(video_path)
         video_feats = F.normalize(video_feats, dim=-1, eps=1e-5)
         n_frames = len(video_feats)
-        # add tef
-        tef_st = torch.arange(0, n_frames, 1.0) / n_frames
-        tef_ed = tef_st + 1.0 / n_frames
-        tef = torch.stack([tef_st, tef_ed], dim=1).to(self.device)  # (n_frames, 2)
-        video_feats = torch.cat([video_feats, tef], dim=1)
+        # add tef # 添加时间轴编码.
+        tef_st = torch.arange(0, n_frames, 1.0) / n_frames # 时间轴开始
+        tef_ed = tef_st + 1.0 / n_frames # 时间轴结尾
+        tef = torch.stack([tef_st, tef_ed], dim=1).to(self.device)  # (n_frames, 2) # 叠加为2维矩阵.
+        video_feats = torch.cat([video_feats, tef], dim=1) #信息全cat上.
         assert n_frames <= 75, "The positional embedding of this pretrained MomentDETR only support video up " \
-                               "to 150 secs (i.e., 75 2-sec clips) in length"
+                               "to 150 secs (i.e., 75 2-sec clips) in length" # 视频太长不行.最大就150s.因为这个位置编码方案太大就不准了.
         video_feats = video_feats.unsqueeze(0).repeat(n_query, 1, 1)  # (#text, T, d)
         video_mask = torch.ones(n_query, n_frames).to(self.device)
         query_feats = self.feature_extractor.encode_text(query_list)  # #text * (L, d)
         query_feats, query_mask = pad_sequences_1d(
-            query_feats, dtype=torch.float32, device=self.device, fixed_length=None)
+            query_feats, dtype=torch.float32, device=self.device, fixed_length=None) # 没有fixed_length,就不固定长度.跟局句子里面词数来.
         query_feats = F.normalize(query_feats, dim=-1, eps=1e-5)
         model_inputs = dict(
             src_vid=video_feats,
@@ -122,6 +122,7 @@ def run_example():
         print(f">> Predicted moments ([start_in_seconds, end_in_seconds, score]): "
               f"{predictions[idx]['pred_relevant_windows']}")
         print(f">> GT saliency scores (only localized 2-sec clips): {query_data['saliency_scores']}")
+        print('下面打印高光时刻的分数.')
         print(f">> Predicted saliency scores (for all 2-sec clip): "
               f"{predictions[idx]['pred_saliency_scores']}")
 
