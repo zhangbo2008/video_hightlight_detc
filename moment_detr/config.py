@@ -31,7 +31,7 @@ class BaseOptions(object):
                                  "Use small portion for debug purposes. Note this is different from --debug, "
                                  "which works by breaking the loops, typically they are not used together.")
         parser.add_argument("--results_root", type=str, default="results")
-        parser.add_argument("--exp_id", type=str, default=None, help="id of this run, required at training")
+        parser.add_argument("--exp_id", type=str, default='id', help="id of this run, required at training")
         parser.add_argument("--seed", type=int, default=2018, help="random seed")
         parser.add_argument("--device", type=int, default=0, help="0 cuda, -1 cpu")
         parser.add_argument("--num_workers", type=int, default=4,
@@ -157,7 +157,9 @@ class BaseOptions(object):
         if not self.initialized:
             self.initialize()
         opt = self.parser.parse_args()
-
+        opt.v_feat_dirs='features/clip_features'
+        opt.results_dir='out'
+        opt.v_feat_dim=512
         if opt.debug:
             opt.results_root = os.path.sep.join(opt.results_root.split(os.path.sep)[:-1] + ["debug_results", ])
             opt.num_workers = 0
@@ -180,9 +182,9 @@ class BaseOptions(object):
                 raise ValueError("--exp_id is required for at a training option!")
 
             ctx_str = opt.ctx_mode + "_sub" if any(["sub_ctx" in p for p in opt.v_feat_dirs]) else opt.ctx_mode
-            opt.results_dir = os.path.join(opt.results_root,
-                                           "-".join([opt.dset_name, ctx_str, opt.exp_id,
-                                                     time.strftime("%Y_%m_%d_%H_%M_%S")]))
+            # opt.results_dir = os.path.join(opt.results_root,
+            #                                "-".join([opt.dset_name, ctx_str, opt.exp_id,
+            #                                          time.strftime("%Y_%m_%d_%H_%M_%S")]))
             mkdirp(opt.results_dir)
             # save a copy of current code
             code_dir = os.path.dirname(os.path.realpath(__file__))

@@ -1,5 +1,5 @@
 # pip install ffmpeg-python ftfy regex
-vid='somevideo/Bhxk-O1Y7Ho.mp4'
+vid='somevideo/J0nA4VgnoCo.mp4'
 import time
 start=time.time()
 import torch

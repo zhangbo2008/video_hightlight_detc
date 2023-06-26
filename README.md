@@ -1,5 +1,15 @@
 # Moment-DETR
 
+另外一种方案是:
+https://huggingface.co/MCG-NJU/videomae-large
+视频编码,然后接一个分类头. 来表示视频片段的重要性.
+
+
+
+
+
+
+
 [QVHighlights: Detecting Moments and Highlights in Videos via Natural Language Queries](https://arxiv.org/abs/2107.09609), NeurIPS 2021
 
 [Jie Lei](http://www.cs.unc.edu/~jielei/), 
@@ -140,7 +150,22 @@ Run prediction...
 >> Predicted saliency scores (for all 2-sec clip): 
     [-0.9258, -0.8115, -0.7598, ..., 0.0739, 0.1068]   
 ```
-You can see the 3rd ranked moment `[105.9434, 122.0372]` matches quite well with the ground truth of `[106, 122]`, with a confidence score of `0.9234`.
+You can see the 3rd ranked moment `[105.9434, 122.0372]` matches quite well with the ground truth of `[106, 122]`, with a confidence score of `0.9234`.#=============数据的裂解. 
+
+
+
+{"qid": 8056, "query": "Chef makes pizza and cuts it up.", "duration": 150, "vid": "RoripwjYFp8_60.0_210.0", "relevant_clip_ids": [53, 54, 55, 56, 57, 58, 59, 60], "saliency_scores": [[2, 3, 3], [2, 3, 3], [4, 3, 3], [3, 4, 3], [3, 4, 0], [3, 4, 0], [2, 4, 0], [2, 4, 0]], "relevant_windows": [[106, 122]]}
+
+
+
+122/2=60
+106/2=53
+所以relevant_clip_ids里面对一个的是帧号.所以叫id . 里面对应106到122梅桢的判定分数.
+
+
+
+
+
 You may want to refer to [data/README.md](data/README.md) for more info about how the ground-truth is organized.
 Your predictions might slightly differ from the predictions here, depends on your environment.
 

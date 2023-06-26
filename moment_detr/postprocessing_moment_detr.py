@@ -2,7 +2,7 @@ import pprint
 import numpy as np
 import torch
 from utils.basic_utils import load_jsonl
-from standalone_eval.eval import eval_submission
+from eval import eval_submission
 from tqdm import tqdm
 
 
